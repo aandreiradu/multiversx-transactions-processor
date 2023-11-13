@@ -1,0 +1,44 @@
+version: '1'
+services:
+  dev-db:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: mvx_root
+      MYSQL_DATABASE: mvx
+      MYSQL_USER: mvx_andrei
+    ports:
+      - "3356:3306"
+    volumes:
+      - mvx_transactions_data:/var/lib/mysql
+
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - '5672:5672'
+
+  redis:
+    image: redis:7
+  
+volumes:
+  mvx_transactions_data:
+
+  # live-updates:
+  #   build: 
+  #     context: ..
+  #     dockerfile: ./live-updates/Dockerfile
+  #   depends_on:
+  #     - dev-db
+  #   restart: always
+
+  # watcher:
+  #   build: 
+  #     context: ..
+  #     dockerfile: ./watcher/Dockerfile
+  #   depends_on:
+  #     - dev-db
+  #   restart: always
+  
+
+
+
