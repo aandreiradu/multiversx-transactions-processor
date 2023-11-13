@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { TransactionsRepository } from '@app/common';
 import { convertTokenValue } from '@app/common/utils/decoding';
 import { TransactionExtended } from '@app/common/types';
-import { Decimal } from '@prisma/client/runtime/library';
+// import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class LiveUpdatesService {
@@ -13,10 +13,10 @@ export class LiveUpdatesService {
     const tokenValue = convertTokenValue(String(transaction.value));
 
     // Convert the number back to Decimal
-    const decimalValue: Decimal = new Decimal(tokenValue);
+    // const decimalValue: Decimal = new Decimal(tokenValue);
 
-    transaction.value = decimalValue;
-    this.logger.log('decimalValue', decimalValue);
+    transaction.value = String(tokenValue);
+    // this.logger.log('decimalValue', decimalValue);
 
     await this.transactionsRepository.saveTransaction(transaction);
     await this.transactionsRepository.cacheTransaction(transaction);

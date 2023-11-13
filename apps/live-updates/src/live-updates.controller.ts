@@ -16,24 +16,23 @@ export class LiveUpdatesController {
   async processTransaction(@Payload() data: any, @Ctx() context: RmqContext) {
     this.logger.log(`Consumer received message => ${data}`);
     try {
-      const payload = JSON.parse(data) as TransactionExtended;
-      this.logger.log(`Starting to process transaction => ${payload.txHash}`);
-      await this.liveUpdatesService.processTransaction(
-        data.transaction as TransactionExtended,
-      );
-      this.logger.log(
-        `Processed successfully transaction => ${payload.txHash}`,
-      );
-      this.rmqService.ack(context);
+      if (data) {
+        const payload = JSON.parse(data) as TransactionExtended;
+        this.logger.log(`Starting to process transaction => ${payload.hash}`);
+        await this.liveUpdatesService.processTransaction(payload);
+        this.logger.log(
+          `Processed successfully transaction => ${payload.hash}`,
+        );
+        this.rmqService.ack(context);
+      }
     } catch (error) {
       this.logger.error(
         `Error CONSUMER TRANSACTIONS => ${JSON.stringify(error)}`,
       );
-
       /*
         Move the message to a DLQ or Requeq with Backoff
       */
-      this.rmqService.nack(context);
+      this.rmqService.ack(context);
       return;
     }
   }
