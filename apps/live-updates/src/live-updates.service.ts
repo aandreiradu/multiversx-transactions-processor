@@ -1,24 +1,62 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { TransactionsRepository } from '@app/common';
 import { convertTokenValue } from '@app/common/utils/decoding';
-import { TransactionExtended } from '@app/common/types';
-// import { Decimal } from '@prisma/client/runtime/library';
+import { WalletRepository } from '@app/common/wallet/wallet.repository';
+import { Transactions } from '@prisma/client';
 
 @Injectable()
 export class LiveUpdatesService {
   private logger: Logger = new Logger(LiveUpdatesService.name);
-  constructor(private transactionsRepository: TransactionsRepository) {}
+  constructor(
+    private transactionsRepository: TransactionsRepository,
+    private readonly walletRepository: WalletRepository,
+  ) {}
 
-  async processTransaction(transaction: TransactionExtended): Promise<void> {
-    const tokenValue = convertTokenValue(String(transaction.value));
+  async processTransaction(transaction: Transactions): Promise<void> {
+    try {
+      this.logger.log(`Starting to process transaction => ${transaction.hash}`);
+      const tokenValue = convertTokenValue(String(transaction.value));
+      transaction.value = String(tokenValue);
 
-    // Convert the number back to Decimal
-    // const decimalValue: Decimal = new Decimal(tokenValue);
+      const senderWallet = await this.walletRepository.checkWalletExistence(
+        transaction.senderId,
+      );
 
-    transaction.value = String(tokenValue);
-    // this.logger.log('decimalValue', decimalValue);
+      if (!senderWallet) {
+        this.logger.warn(
+          `No wallet found for sender => ${transaction.senderId}`,
+        );
+        await this.walletRepository.createWallet({
+          addressId: transaction.senderId,
+          name: 'MVX_WALLET_DEVNET',
+        });
+        this.logger.log(`created this sender wallet`);
+        this.logger.log(senderWallet);
+        await this.walletRepository.cacheWallet(transaction.senderId);
+      }
 
-    await this.transactionsRepository.saveTransaction(transaction);
-    await this.transactionsRepository.cacheTransaction(transaction);
+      const receiverWallet = await this.walletRepository.checkWalletExistence(
+        transaction.receiverId,
+      );
+      if (!receiverWallet) {
+        this.logger.warn(
+          `No wallet found for receiver => ${transaction.receiverId}`,
+        );
+        await this.walletRepository.createWallet({
+          addressId: transaction.receiverId,
+          name: 'MVX_WALLET_DEVNET',
+        });
+
+        await this.walletRepository.cacheWallet(transaction.senderId);
+      }
+
+      await this.transactionsRepository.saveTransaction(transaction);
+      await this.transactionsRepository.cacheTransaction(transaction);
+      this.logger.log(
+        `Successfully processed transaction => ${transaction.hash}`,
+      );
+    } catch (error) {
+      throw error;
+    }
   }
 }

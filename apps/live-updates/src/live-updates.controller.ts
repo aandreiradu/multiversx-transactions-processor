@@ -2,7 +2,7 @@ import { Controller, Logger } from '@nestjs/common';
 import { LiveUpdatesService } from './live-updates.service';
 import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices';
 import { RmqService } from '@app/common';
-import { TransactionExtended } from '@app/common/types';
+import { Transactions } from '@prisma/client';
 
 @Controller()
 export class LiveUpdatesController {
@@ -17,8 +17,7 @@ export class LiveUpdatesController {
     this.logger.log(`Consumer received message => ${data}`);
     try {
       if (data) {
-        const payload = JSON.parse(data) as TransactionExtended;
-        this.logger.log(`Starting to process transaction => ${payload.hash}`);
+        const payload = JSON.parse(data) as Transactions;
         await this.liveUpdatesService.processTransaction(payload);
         this.logger.log(
           `Processed successfully transaction => ${payload.hash}`,
@@ -27,10 +26,11 @@ export class LiveUpdatesController {
       }
     } catch (error) {
       this.logger.error(
-        `Error CONSUMER TRANSACTIONS => ${JSON.stringify(error)}`,
+        `Error CONSUMER TRANSACTIONS => ${JSON.stringify(data)}`,
       );
+      this.logger.error(error);
       /*
-        Move the message to a DLQ or Requeq with Backoff
+        Move the message to a DLQ or Requeq with exp. backoff
       */
       this.rmqService.ack(context);
       return;

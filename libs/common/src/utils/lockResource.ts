@@ -3,29 +3,26 @@ import { Logger } from '@nestjs/common';
 export class LockResource {
   private static lockArray: string[] = [];
 
-  static async lock(key: string, callbackFn: () => void) {
-    const logger: Logger = new Logger(LockResource.name);
+  static async lock(key: string, func: () => Promise<void>, log = false) {
+    const logger = new Logger('Lock');
 
-    if (LockResource.lockArray.includes(key)) {
+    if (LockResource.lockArray.includes(key) && log) {
+      logger.log(`${key} is already running`);
       return;
     }
 
     LockResource.lockArray.push(key);
 
     try {
-      await callbackFn();
+      await func();
     } catch (error) {
-      logger.error(
-        `Unable to lock resource with key => ${key}; error => ${JSON.stringify(
-          error,
-        )}`,
-      );
+      logger.error(`Error running ${key}`);
+      logger.error(error);
     } finally {
-      /*
-       * Check if the key was not removed by another service. If it's still present, remove the key to unlock the resource
-       */
-      LockResource.lockArray.indexOf(key) > 0 &&
-        LockResource.lockArray.splice(LockResource.lockArray.indexOf(key), 1);
+      const index = LockResource.lockArray.indexOf(key);
+      if (index >= 0) {
+        LockResource.lockArray.splice(index, 1);
+      }
     }
   }
 }

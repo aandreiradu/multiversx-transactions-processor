@@ -7,35 +7,71 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Wallet {
+  addressId String  @id @unique
+  name      String?
+
+  transactionsReceived Transactions[] @relation("receivedTransactions")
+  transactionsSent     Transactions[] @relation("sentTransactions")
+
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
 model SenderAssets {
   id            String       @id @default(uuid())
   name          String
   iconPng       String
   iconSvg       String
-  transaction   Transactions @relation(fields: [transactionId], references: [txHash])
+  transaction   Transactions @relation(fields: [transactionId], references: [hash])
   transactionId String       @unique
 }
 
 model Transactions {
-  txHash        String        @id @unique
-  gasLimit      Int?
-  gasPrice      BigInt?
-  gasUsed       Int?
-  miniBlockHash String?
-  nonce         Int?
-  receiver      String
-  receiverShard Int
-  round         Int
-  sender        String
-  senderShard   Int
-  signature     String
-  status        String
-  value         Decimal
-  fee           Decimal
-  timestamp     Int
-  function      String
-  price         Decimal
-  senderAssets  SenderAssets?
-  coin          String
-  decodedData   String
+  hash                    String        @id @unique
+  value                   String
+  data                    String?       @db.LongText()
+  status                  String
+  sourceShard             Int
+  destinationShard        Int
+  nonce                   Int
+  previousTransactionHash String?
+  originalTransactionHash String?
+  gasPrice                Int?          @default(0)
+  gasLimit                Int?          @default(0)
+  SenderAssets            SenderAssets?
+  coin                    String
+  createdAt               DateTime?     @default(now())
+
+  senderId String
+  sender   Wallet @relation("sentTransactions", fields: [senderId], references: [addressId])
+
+  receiverId String
+  receiver   Wallet @relation("receivedTransactions", fields: [receiverId], references: [addressId])
 }
+
+// model Transactions {
+//   hash             String        @id @unique
+//   gasLimit         Int?
+//   gasPrice         BigInt?
+//   gasUsed          Int?
+//   miniBlockHash    String?
+//   nonce            Int?
+//   receiver         String
+//   receiverShard    Int?
+//   round            Int           @default(16832799)
+//   sender           String?
+//   senderShard      Int?
+//   signature        String?
+//   status           String?
+//   value            Decimal?
+//   fee              Decimal?
+//   timestamp        Int?
+//   function         String?
+//   price            Decimal?
+//   senderAssets     SenderAssets?
+//   coin             String?
+//   decodedData      String?
+//   sourceShard      Int?
+//   destinationShard Int?
+// }

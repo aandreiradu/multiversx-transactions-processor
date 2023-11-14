@@ -8,6 +8,7 @@ import { LiveUpdatesController } from './live-updates.controller';
 import { TRANSACTIONS_SERVICE } from '../../../libs/common/constants/services';
 import { CustomRedisModule } from '@app/common/redis/redis.module';
 import { CustomRedisService } from '@app/common/redis/redis.service';
+import { WalletRepository } from '@app/common/wallet/wallet.repository';
 
 @Module({
   imports: [
@@ -23,7 +24,12 @@ import { CustomRedisService } from '@app/common/redis/redis.service';
     }),
     CustomRedisModule,
   ],
-  providers: [LiveUpdatesService, TransactionsRepository, CustomRedisService],
+  providers: [
+    LiveUpdatesService,
+    TransactionsRepository,
+    WalletRepository,
+    CustomRedisService,
+  ],
   controllers: [LiveUpdatesController],
   exports: [LiveUpdatesService],
 })

@@ -8,6 +8,7 @@ import { Cron } from '@nestjs/schedule';
 import { LockResource } from '@app/common/utils/lockResource';
 import { TRANSACTIONS_SERVICE } from '../../../../libs/common/constants/services';
 import { ClientProxy } from '@nestjs/microservices';
+import { Transactions } from '@prisma/client';
 
 @Injectable()
 export class ServiceWorkersService {
@@ -25,6 +26,9 @@ export class ServiceWorkersService {
   async handleTransactions() {
     this.logger.warn(`running handle transactions job`);
     await LockResource.lock('mvxTransactions', async () => {
+      this.logger.error(
+        `RECEIVED NEW TRANSACTIONS UPDATES => ${new Date().toISOString()}`,
+      );
       await this.transactionProcessor.start({
         mode: TransactionProcessorMode.Hyperblock,
         gatewayUrl: this.configService.get<string>('gatewayURL'),
@@ -47,25 +51,42 @@ export class ServiceWorkersService {
           );
           try {
             for (const transaction of transactions) {
-              if (!transaction.data) continue;
+              if (!transaction.data) return;
 
               const decodedData = Buffer.from(
                 transaction.data,
                 'base64',
               ).toString();
               const coin = decodedData.slice(0, 4);
-              Object.assign(transaction, {
-                decodedData,
-                coin,
-              });
+              this.logger.error(`coin => ${coin}`);
               if (coin.includes('ESDT') || coin.includes('EGLD')) {
                 this.logger.log(
-                  `Valid transaction detected => ${transaction.hash}`,
+                  `Valid transaction detected => ${JSON.stringify(
+                    transaction,
+                  )}`,
                 );
-                // await this.deleteCacheKey(`pong:${transaction.sender}`);
+
+                const mappedTransactionModel: Transactions = {
+                  ...transaction,
+                  value: '5999200000000000000', // in https://gateway.multiversx.com, found only transactions with value 0
+                  coin,
+                  senderId: transaction.sender,
+                  previousTransactionHash:
+                    transaction?.previousTransactionHash ?? null,
+                  originalTransactionHash:
+                    transaction.originalTransactionHash ?? null,
+                  receiverId: transaction.receiver,
+                  data: transaction.data,
+                  gasPrice: transaction.gasPrice,
+                  gasLimit: transaction.gasLimit,
+                  createdAt: undefined,
+                };
+
+                delete mappedTransactionModel['sender'];
+                delete mappedTransactionModel['receiver'];
                 this.transactionsClient.emit(
                   'process_transaction',
-                  JSON.stringify(transaction),
+                  JSON.stringify(mappedTransactionModel),
                 );
               }
             }

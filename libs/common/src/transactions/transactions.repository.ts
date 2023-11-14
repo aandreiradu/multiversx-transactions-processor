@@ -4,9 +4,8 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { SenderAssets } from '@prisma/client';
+import { Transactions } from '@prisma/client';
 import { CustomRedisService } from '../redis/redis.service';
-import { TransactionExtended } from '../types';
 import {
   senderCacheFormat,
   receiverCacheFormat,
@@ -20,79 +19,83 @@ export class TransactionsRepository {
     private readonly redisService: CustomRedisService,
   ) {}
 
-  async saveTransaction(transaction: TransactionExtended): Promise<void> {
-    this.logger.log(`received this transaction to save => ${transaction}`);
-    this.logger.log(`Starting to save ${transaction.txHash} transactions...`);
+  async saveTransaction(transaction: Transactions): Promise<void> {
+    this.logger.log(`Starting to save transaction ${transaction.hash}`);
+    this.logger.log(transaction);
     try {
-      await this.prismaService.transactions.upsert({
-        where: {
-          txHash: transaction.txHash,
-        },
-        create: transaction,
-        update: {
+      await this.prismaService.transactions.create({
+        data: {
           ...transaction,
+          createdAt: new Date(),
         },
       });
-
-      this.logger.log(
-        `Successfully saved transaction => ${transaction.txHash}`,
-      );
+      this.logger.log(`Successfully saved transaction => ${transaction.hash}`);
     } catch (error) {
-      this.logger.error(`Unable to save transaction => ${transaction}`);
-      this.logger.error(`Error saving transaction => ${JSON.stringify(error)}`);
+      this.logger.error(
+        `Unable to save transaction => ${JSON.stringify(transaction)}`,
+      );
+      this.logger.error(error);
       throw new InternalServerErrorException(`Unable to save transaction`);
     }
   }
 
-  async cacheTransaction(transaction: TransactionExtended): Promise<void> {
-    this.logger.log(`received this transaction to cache => ${transaction}`);
+  async cacheTransaction(transaction: Transactions): Promise<void> {
+    this.logger.log(`Starting to cache ${transaction.hash} transaction`);
+    this.logger.log(JSON.stringify(transaction));
     try {
       let senderFormat = senderCacheFormat;
       let receiverFormat = receiverCacheFormat;
+
+      // Maybe to move it to atomic fn
       senderFormat =
-        transaction.sender &&
+        transaction.senderId &&
         senderFormat
-          .replace('{senderId}', transaction.sender)
-          .replace('{coinType}', transaction.coin);
+          .replace('{walletId}', transaction.senderId)
+          .replace('{coinType}', transaction.coin)
+          .replace('amount', transaction.value);
 
       receiverFormat =
-        transaction.receiver &&
+        transaction.receiverId &&
         receiverFormat
-          .replace('{receiverId}', transaction.receiver)
-          .replace('{coinType}', transaction.coin);
+          .replace('{walletId}', transaction.receiverId)
+          .replace('{coinType}', transaction.coin)
+          .replace('amount', transaction.value);
 
-      this.logger.log(`senderFormat => ${senderFormat}`);
-      this.logger.log(`receiverFormat => ${receiverFormat}`);
+      this.logger.warn('REPLACE =>', { senderFormat, receiverFormat });
 
-      await this.redisService.set(senderFormat, transaction.value);
-      await this.redisService.set(receiverFormat, transaction.value);
+      await this.redisService.setList(senderFormat, transaction.value);
+      await this.redisService.setList(receiverFormat, transaction.value);
 
-      this.logger.log(`Finished to cache the transaction...`);
+      this.logger.log(`Finished to cache transaction ${transaction.hash}`);
     } catch (error) {
-      this.logger.error(`Unable to cache transaction => `);
+      this.logger.log(
+        `Unable to cache transaction => ${JSON.stringify(transaction)}`,
+      );
+      this.logger.error(error);
       throw new InternalServerErrorException();
     }
   }
 
   async getTransaction(transactionHash: string) {
     try {
-      // const cachedTransaction = await this.redisService.get();
+      // const cachedTransaction = await this.redisService.getList();
     } catch (error) {
       this.logger.error(`Unable to get transaction => ${transactionHash}`);
       throw new InternalServerErrorException();
     }
   }
 
-  async getSenderAssets(id: string): Promise<SenderAssets | null> {
-    try {
-      return this.prismaService.senderAssets.findFirst({
-        where: {
-          id,
-        },
-      });
-    } catch (error) {
-      this.logger.error(`Unable to get sender assets for id => ${id}`);
-      throw new InternalServerErrorException();
-    }
-  }
+  // async getSenderAssets(id: string): Promise<SenderAssets | null> {
+  //   try {
+  //     return this.prismaService.senderAssets.findFirst({
+  //       where: {
+  //         id,
+  //       },
+  //     });
+  //   } catch (error) {
+  //     this.logger.error(`Unable to get sender assets for id => ${id}`);
+  //     this.logger.error(error);
+  //     throw new InternalServerErrorException();
+  //   }
+  // }
 }

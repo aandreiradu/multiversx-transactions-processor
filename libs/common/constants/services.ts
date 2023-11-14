@@ -1,7 +1,7 @@
 export const TRANSACTIONS_SERVICE = 'MVX_TRANSACTIONS';
 
-export const receiverCacheFormat = `receiver:{receiverId}:coin:{coinType}:amount`;
-export const senderCacheFormat = `sender:{senderId}:coin:{coinType}:amount`;
+export const receiverCacheFormat = `receiver:{walletId}:coin:{coinType}:amount`;
+export const senderCacheFormat = `sender:{walletId}:coin:{coinType}:amount`;
 
 /**
  * 
