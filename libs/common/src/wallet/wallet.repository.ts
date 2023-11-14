@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CustomRedisService } from '../redis/redis.service';
 import { Wallet } from '@prisma/client';
+import { cachedWalletFormat } from 'libs/common/constants/services';
 
 @Injectable()
 export class WalletRepository {
@@ -17,11 +18,16 @@ export class WalletRepository {
 
   async createWallet(dto: Pick<Wallet, 'addressId' | 'name'>): Promise<Wallet> {
     try {
-      return this.prismaService.wallet.create({
+      const wallet = await this.prismaService.wallet.create({
         data: {
           ...dto,
         },
       });
+
+      this.logger.log(
+        `Successfully created wallet for address => ${dto.addressId}`,
+      );
+      return wallet;
     } catch (error) {
       this.logger.error(`Unable to create wallet => ${JSON.stringify(dto)}`);
       this.logger.error(JSON.stringify(error));
@@ -30,11 +36,13 @@ export class WalletRepository {
     }
   }
 
-  async cacheWallet(walletId: string): Promise<void> {
+  async cacheWallet(addressId: string): Promise<void> {
     try {
-      await this.redisService.set(walletId, walletId);
+      let walletFormat = cachedWalletFormat;
+      walletFormat = walletFormat.replace('{walletId}', addressId);
+      await this.redisService.set(walletFormat, addressId);
     } catch (error) {
-      this.logger.error(`Unable to cache wallet => ${walletId}`);
+      this.logger.error(`Unable to cache wallet => ${addressId}`);
       this.logger.error(JSON.stringify(error));
       throw new InternalServerErrorException();
     }
@@ -43,7 +51,9 @@ export class WalletRepository {
   async checkWalletExistence(addressId: string): Promise<Wallet | null> {
     this.logger.log(`Starting to check wallet existance => ${addressId}`);
     try {
-      const cachedWallet = await this.redisService.get<Wallet>(addressId);
+      let walletFormat = cachedWalletFormat;
+      walletFormat = walletFormat.replace('{walletId}', addressId);
+      const cachedWallet = await this.redisService.get<Wallet>(walletFormat);
 
       if (cachedWallet) {
         return cachedWallet;

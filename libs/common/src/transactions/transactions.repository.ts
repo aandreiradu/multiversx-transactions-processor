@@ -10,6 +10,7 @@ import {
   senderCacheFormat,
   receiverCacheFormat,
 } from 'libs/common/constants/services';
+import { availableCoins } from 'apps/watcher/src/dtos';
 
 @Injectable()
 export class TransactionsRepository {
@@ -51,15 +52,13 @@ export class TransactionsRepository {
         transaction.senderId &&
         senderFormat
           .replace('{walletId}', transaction.senderId)
-          .replace('{coinType}', transaction.coin)
-          .replace('amount', transaction.value);
+          .replace('{coinType}', transaction.coin);
 
       receiverFormat =
         transaction.receiverId &&
         receiverFormat
           .replace('{walletId}', transaction.receiverId)
-          .replace('{coinType}', transaction.coin)
-          .replace('amount', transaction.value);
+          .replace('{coinType}', transaction.coin);
 
       this.logger.warn('REPLACE =>', { senderFormat, receiverFormat });
 
@@ -76,9 +75,43 @@ export class TransactionsRepository {
     }
   }
 
+  async getWalletSentAmount(
+    addressId: string,
+    coin: availableCoins,
+  ): Promise<number> {
+    try {
+      let senderFormat = senderCacheFormat;
+      senderFormat = senderFormat
+        .replace('{walletId}', addressId)
+        .replace('{coinType}', coin);
+      console.log({ senderFormat });
+
+      const cachedAmount = await this.redisService.getList<string>(
+        senderFormat,
+      );
+      console.log('cachedAmount', cachedAmount);
+      console.log('typeof', typeof cachedAmount);
+
+      if (cachedAmount?.length) {
+        return +cachedAmount
+          .reduce((acc, val) => (acc = acc + +val), 0)
+          .toFixed(4);
+      } else {
+        // go to the database and get the values, cache them and return
+        return 0;
+      }
+    } catch (error) {
+      this.logger.error(
+        `Unable to get wallet sent amounts for address => ${addressId} coin => ${coin}`,
+      );
+      this.logger.error(error);
+      throw new InternalServerErrorException();
+    }
+  }
+
   async getTransaction(transactionHash: string) {
     try {
-      // const cachedTransaction = await this.redisService.getList();
+      const cachedTransaction = await this.redisService.getList('');
     } catch (error) {
       this.logger.error(`Unable to get transaction => ${transactionHash}`);
       throw new InternalServerErrorException();
