@@ -30,8 +30,6 @@ export class LiveUpdatesService {
           addressId: transaction.senderId,
           name: 'MVX_WALLET_DEVNET',
         });
-        this.logger.log(`created this sender wallet`);
-        this.logger.log(senderWallet);
         await this.walletRepository.cacheWallet(transaction.senderId);
       }
 
@@ -46,7 +44,6 @@ export class LiveUpdatesService {
           addressId: transaction.receiverId,
           name: 'MVX_WALLET_DEVNET',
         });
-
         await this.walletRepository.cacheWallet(transaction.senderId);
       }
 

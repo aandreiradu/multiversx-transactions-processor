@@ -19,9 +19,6 @@ export class LiveUpdatesController {
       if (data) {
         const payload = JSON.parse(data) as Transactions;
         await this.liveUpdatesService.processTransaction(payload);
-        this.logger.log(
-          `Processed successfully transaction => ${payload.hash}`,
-        );
         this.rmqService.ack(context);
       }
     } catch (error) {
