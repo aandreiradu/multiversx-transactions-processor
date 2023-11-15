@@ -2,13 +2,19 @@ import {
   TransactionProcessorMode,
   TransactionProcessor,
 } from '@multiversx/sdk-transaction-processor';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { LockResource } from '@app/common/utils/lockResource';
 import { TRANSACTIONS_SERVICE } from '../../../../libs/common/constants/services';
 import { ClientProxy } from '@nestjs/microservices';
 import { Transactions } from '@prisma/client';
+import { transactionSchema } from 'apps/watcher/src/dtos';
 
 @Injectable()
 export class ServiceWorkersService {
@@ -24,11 +30,7 @@ export class ServiceWorkersService {
 
   @Cron('*/1 * * * * *')
   async handleTransactions() {
-    this.logger.warn(`running handle transactions job`);
     await LockResource.lock('mvxTransactions', async () => {
-      this.logger.error(
-        `RECEIVED NEW TRANSACTIONS UPDATES => ${new Date().toISOString()}`,
-      );
       await this.transactionProcessor.start({
         mode: TransactionProcessorMode.Hyperblock,
         gatewayUrl: this.configService.get<string>('gatewayURL'),
@@ -58,14 +60,7 @@ export class ServiceWorkersService {
                 'base64',
               ).toString();
               const coin = decodedData.slice(0, 4);
-              this.logger.error(`coin => ${coin}`);
               if (coin.includes('ESDT') || coin.includes('EGLD')) {
-                this.logger.log(
-                  `Valid transaction detected => ${JSON.stringify(
-                    transaction,
-                  )}`,
-                );
-
                 const mappedTransactionModel: Transactions = {
                   ...transaction,
                   value: '5999200000000000000', // in https://gateway.multiversx.com, found only transactions with value 0
@@ -81,6 +76,22 @@ export class ServiceWorkersService {
                   gasLimit: transaction.gasLimit,
                   createdAt: undefined,
                 };
+
+                /*
+                 * Perform minimum DTO validation before emitting events
+                 */
+                const valid = await transactionSchema.safeParseAsync(
+                  mappedTransactionModel,
+                );
+                if (!valid.success) {
+                  throw new BadRequestException('Invalid transaction schema');
+                }
+
+                this.logger.log(
+                  `Valid transaction detected => ${JSON.stringify(
+                    transaction,
+                  )}`,
+                );
 
                 delete mappedTransactionModel['sender'];
                 delete mappedTransactionModel['receiver'];

@@ -3,6 +3,13 @@ import { z } from 'nestjs-zod/z';
 
 export type availableCoins = 'EGLD' | 'ESDT';
 
+export const transactionSchema = z.object({
+  coin: z.enum(['EGLD', 'ESDT']),
+  senderId: z.string().min(1),
+  receiverId: z.string().min(1),
+  value: z.string(),
+});
+
 export const availableCoinsSchema = z.object({
   coin: z.enum(['EGLD', 'ESDT']),
 });
