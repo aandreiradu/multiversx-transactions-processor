@@ -9,8 +9,9 @@ async function bootstrap() {
   const serviceWorkers = app.get<ServiceWorkersService>(ServiceWorkersService);
 
   app.connectMicroservice(rmqService.getOptions('MVX_TRANSACTIONS'));
-  // app.connectMicroservice(serviceWorkers.handleTransactions());
+  app.connectMicroservice(serviceWorkers.handleTransactions());
   await app.startAllMicroservices();
+  await app.listen(3000);
   console.log(`Live-updates started`);
 }
 bootstrap();
