@@ -1,11 +1,11 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
+  <a href="http://nestjs.com/" target="_blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
 </p>
 
 ## Description
 
 REST API to track and retrieve transaction amounts for specific coins (EGLD or ESDT) on the MultiversX Blockchain.
-Uses <a href="https://github.com/multiversx/mx-sdk-transaction-processor" target="blank">sdk-transaction-processfor</a> from MultiversX
+Uses <a href="https://github.com/multiversx/mx-sdk-transaction-processor" target="_blank">sdk-transaction-processfor</a> from MultiversX
 
 ## Local Development Environment
 
