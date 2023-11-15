@@ -19,26 +19,19 @@ services:
 
   redis:
     image: redis:7
+
+  
+  mvx-transactions:
+    build: 
+      context: .
+      dockerfile: ./apps/Dockerfile
+
+    env_file:
+      - ./.env
+    depends_on:
+      - dev-db
+      - rabbitmq
+      - redis
   
 volumes:
   mvx_transactions_data:
-
-  # live-updates:
-  #   build: 
-  #     context: ..
-  #     dockerfile: ./live-updates/Dockerfile
-  #   depends_on:
-  #     - dev-db
-  #   restart: always
-
-  # watcher:
-  #   build: 
-  #     context: ..
-  #     dockerfile: ./watcher/Dockerfile
-  #   depends_on:
-  #     - dev-db
-  #   restart: always
-  
-
-
-
