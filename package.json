@@ -10,6 +10,8 @@
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "dev:watcher": "nest start watcher --watch",
     "dev:live-updates": "nest start live-updates --watch",
+    "db:gen": "prisma generate && prisma db push",
+    "db:push": "prisma db push",
     "dev": "concurrently -n 'LiveUpdates, Watcher' -c green.bold,blue.bold 'pnpm dev:live-updates' 'pnpm dev:watcher' ",
     "start": "nest start",
     "start:dev": "nest start --watch",

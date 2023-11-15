@@ -14,7 +14,6 @@ export class LiveUpdatesController {
 
   @EventPattern('process_transaction')
   async processTransaction(@Payload() data: any, @Ctx() context: RmqContext) {
-    this.logger.log(`Consumer received message => ${data}`);
     try {
       if (data) {
         const payload = JSON.parse(data) as Transactions;
