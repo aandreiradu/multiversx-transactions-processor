@@ -2,72 +2,66 @@
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+REST API to track and retrieve transaction amounts for specific coins (EGLD or ESDT) on the MultiversX Blockchain.
+Uses <a href="https://github.com/multiversx/mx-sdk-transaction-processor" target="blank">sdk-transaction-processfor</a> from MultiversX
 
-## Installation
+## Local Development Environment
 
-```bash
-$ pnpm install
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/)
+
+### Environment Setup
+
+```sh
+# Install Node 18
+nvm install lts/hydrogen
+nvm use lts/hydrogen
+
+# Install pnpm using Corepack
+corepack enable
 ```
 
-## Running the app
+If you do not have `corepack` installed locally you can use `npm` or `yarn` to install `pnpm`:
 
-```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+```sh
+npm install pnpm -g
+# or
+yarn install pnpm -g
 ```
 
-## Test
+For alternative methods of installing `pnpm`, you can refer to the [official `pnpm` documentation](https://pnpm.io/installation).
 
-```bash
-# unit tests
-$ pnpm run test
+To install dependencies, execute:
 
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+```sh
+pnpm i
 ```
 
-## Support
+### Environment Variables
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+In order for the local playground to function, it is necessary to configure the environment variables appropriately. You must duplicate the example environment file, `.env.example`, into your local environment file, `.env`.
 
-## Stay in touch
+Navigate to the project's root directory and enter the following command:
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```sh
+cp .env.example  .env.env
+```
 
-## License
+### Local Playground
 
-Nest is [MIT licensed](LICENSE).
+Navigate to the project's root directory and execute:
+
+```sh
+pnpm dev
+```
+
+Upon executing the above command, the following will be available
+
+- live-updates
+- watcher at [http://localhost:3001](http://localhost:3003) with the following routes available:
+  - GET /balances/coins/:coin/received?walletId={walletId} (Return received amounts for the authenticated user's wallet)
+  - GET /balances/coins/:coin/sent?walletId={walletId} (Return sent amounts for the authenticated user's wallet)
+    Replace ":coin" with EGLD or ESDT Identifier depending on the coin.
