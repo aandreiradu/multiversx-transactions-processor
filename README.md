@@ -12,6 +12,8 @@ Uses <a href="https://github.com/multiversx/mx-sdk-transaction-processor" target
 ### Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/)
+- [RabbitMQ](https://www.rabbitmq.com/download.html)
+- [Redis](https://redis.io/docs/install/install-redis/)
 
 ### Environment Setup
 
