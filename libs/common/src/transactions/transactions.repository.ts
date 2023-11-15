@@ -10,7 +10,6 @@ import {
   senderCacheFormat,
   receiverCacheFormat,
 } from 'libs/common/constants/services';
-import { availableCoins } from 'apps/watcher/src/dtos';
 
 @Injectable()
 export class TransactionsRepository {
@@ -22,7 +21,6 @@ export class TransactionsRepository {
 
   async saveTransaction(transaction: Transactions): Promise<void> {
     this.logger.log(`Starting to save transaction ${transaction.hash}`);
-    this.logger.log(transaction);
     try {
       await this.prismaService.transactions.create({
         data: {
@@ -35,7 +33,7 @@ export class TransactionsRepository {
       this.logger.error(
         `Unable to save transaction => ${JSON.stringify(transaction)}`,
       );
-      this.logger.error(error);
+      this.logger.error(JSON.stringify(error, null, 2));
       throw new InternalServerErrorException(`Unable to save transaction`);
     }
   }
@@ -60,8 +58,6 @@ export class TransactionsRepository {
           .replace('{walletId}', transaction.receiverId)
           .replace('{coinType}', transaction.coin);
 
-      this.logger.warn('REPLACE =>', { senderFormat, receiverFormat });
-
       await this.redisService.setList(senderFormat, transaction.value);
       await this.redisService.setList(receiverFormat, transaction.value);
 
@@ -71,49 +67,6 @@ export class TransactionsRepository {
         `Unable to cache transaction => ${JSON.stringify(transaction)}`,
       );
       this.logger.error(error);
-      throw new InternalServerErrorException();
-    }
-  }
-
-  async getWalletSentAmount(
-    addressId: string,
-    coin: availableCoins,
-  ): Promise<number> {
-    try {
-      let senderFormat = senderCacheFormat;
-      senderFormat = senderFormat
-        .replace('{walletId}', addressId)
-        .replace('{coinType}', coin);
-      console.log({ senderFormat });
-
-      const cachedAmount = await this.redisService.getList<string>(
-        senderFormat,
-      );
-      console.log('cachedAmount', cachedAmount);
-      console.log('typeof', typeof cachedAmount);
-
-      if (cachedAmount?.length) {
-        return +cachedAmount
-          .reduce((acc, val) => (acc = acc + +val), 0)
-          .toFixed(4);
-      } else {
-        // go to the database and get the values, cache them and return
-        return 0;
-      }
-    } catch (error) {
-      this.logger.error(
-        `Unable to get wallet sent amounts for address => ${addressId} coin => ${coin}`,
-      );
-      this.logger.error(error);
-      throw new InternalServerErrorException();
-    }
-  }
-
-  async getTransaction(transactionHash: string) {
-    try {
-      const cachedTransaction = await this.redisService.getList('');
-    } catch (error) {
-      this.logger.error(`Unable to get transaction => ${transactionHash}`);
       throw new InternalServerErrorException();
     }
   }
