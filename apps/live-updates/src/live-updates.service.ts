@@ -1,4 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { TransactionsRepository } from '@app/common';
 import { convertTokenValue } from '@app/common/utils/decoding';
 import { WalletRepository } from '@app/common/wallet/wallet.repository';
@@ -18,40 +22,47 @@ export class LiveUpdatesService {
       const tokenValue = convertTokenValue(String(transaction.value));
       transaction.value = String(tokenValue);
 
-      const senderWallet = await this.walletRepository.checkWalletExistence(
-        transaction.senderId,
-      );
+      let [senderWallet, receiverWallet] = await Promise.all([
+        this.walletRepository.checkWalletExistence(transaction.senderId),
+        this.walletRepository.checkWalletExistence(transaction.receiverId),
+      ]);
 
       if (!senderWallet) {
         this.logger.warn(
           `No wallet found for sender => ${transaction.senderId}`,
         );
-        await this.walletRepository.createWallet({
+        senderWallet = await this.walletRepository.createWallet({
           addressId: transaction.senderId,
           name: 'MVX_WALLET_DEVNET',
         });
-        await this.walletRepository.cacheWallet(transaction.senderId);
+        await this.walletRepository.cacheWallet(senderWallet.addressId);
       }
 
-      const receiverWallet = await this.walletRepository.checkWalletExistence(
-        transaction.receiverId,
-      );
       if (!receiverWallet) {
         this.logger.warn(
           `No wallet found for receiver => ${transaction.receiverId}`,
         );
-        await this.walletRepository.createWallet({
+        receiverWallet = await this.walletRepository.createWallet({
           addressId: transaction.receiverId,
           name: 'MVX_WALLET_DEVNET',
         });
-        await this.walletRepository.cacheWallet(transaction.senderId);
+        await this.walletRepository.cacheWallet(receiverWallet.addressId);
       }
 
-      await this.transactionsRepository.saveTransaction(transaction);
-      await this.transactionsRepository.cacheTransaction(transaction);
-      this.logger.log(
-        `Successfully processed transaction => ${transaction.hash}`,
-      );
+      if (senderWallet && receiverWallet) {
+        this.logger.log(`Both wallets found => proceed to save transaction`);
+        await this.transactionsRepository.saveTransaction(transaction);
+        await this.transactionsRepository.cacheTransaction(transaction);
+        this.logger.log(
+          `Successfully processed & cached transaction => ${transaction.hash}`,
+        );
+      } else {
+        this.logger.error(
+          `Missing sender/receiver wallet => stopping transaction save`,
+        );
+        this.logger.error({ senderWallet, receiverWallet });
+        throw new InternalServerErrorException();
+      }
     } catch (error) {
       throw error;
     }
