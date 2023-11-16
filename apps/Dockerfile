@@ -20,6 +20,8 @@ COPY . ./
 # Install packages from virtual store
 RUN pnpm install -r --offline
 
-RUN pnpm db:gen
+ADD https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh .
+RUN chmod +x wait-for-it.sh
 
-RUN pnpm dev
+# Wait for the MySQL service to be ready before running Prisma commands
+CMD ["./wait-for-it.sh", "dev-db:3306", "--", "pnpm", "db:gen"]
