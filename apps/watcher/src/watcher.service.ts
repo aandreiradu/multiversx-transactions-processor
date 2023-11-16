@@ -20,7 +20,7 @@ export class WatcherService {
     private readonly redisService: CustomRedisService,
   ) {}
 
-  async getWalletAmount(
+  async getWalletAmountByCoin(
     addressId: string,
     coin: availableCoins,
     type: 'sent' | 'received',

@@ -18,7 +18,7 @@ export class WatcherController {
     @Query(new ZodPipe(addressIdSchema)) { addressId }: addressDTO,
   ) {
     return {
-      amountSent: await this.watcherService.getWalletAmount(
+      amountSent: await this.watcherService.getWalletAmountByCoin(
         addressId,
         coin,
         'sent',
@@ -32,7 +32,7 @@ export class WatcherController {
     @Query(new ZodPipe(addressIdSchema)) { addressId }: addressDTO,
   ) {
     return {
-      amountSent: await this.watcherService.getWalletAmount(
+      amountSent: await this.watcherService.getWalletAmountByCoin(
         addressId,
         coin,
         'received',
