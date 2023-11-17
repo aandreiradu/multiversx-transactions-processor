@@ -9,9 +9,11 @@ import { TRANSACTIONS_SERVICE } from '../../../libs/common/constants/services';
 import { CustomRedisModule } from '@app/common/redis/redis.module';
 import { CustomRedisService } from '@app/common/redis/redis.service';
 import { WalletRepository } from '@app/common/wallet/wallet.repository';
+import { WatcherModule } from 'apps/watcher/src/watcher.module';
 
 @Module({
   imports: [
+    WatcherModule,
     PrismaModule,
     ServiceWorkersModule,
     ConfigModule.forRoot({

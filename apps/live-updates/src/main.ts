@@ -8,10 +8,11 @@ async function bootstrap() {
   const rmqService = app.get<RmqService>(RmqService);
   const serviceWorkers = app.get<ServiceWorkersService>(ServiceWorkersService);
 
+  app.enableCors();
   app.connectMicroservice(rmqService.getOptions('MVX_TRANSACTIONS'));
   app.connectMicroservice(serviceWorkers.handleTransactions());
   await app.startAllMicroservices();
-  await app.listen(3000);
+  await app.listen(3001);
   console.log(`Live-updates started`);
 }
 bootstrap();
