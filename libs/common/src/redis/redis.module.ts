@@ -8,13 +8,11 @@ import { ConfigService } from '@nestjs/config';
       useFactory: (config: ConfigService) => {
         const host = config.getOrThrow<string>('REDIS_HOST');
         const port = +config.getOrThrow<number>('REDIS_PORT');
-        const password = config.getOrThrow<string>('REDIS_PASSWORD');
 
         return {
           config: {
             host,
             port,
-            password,
           },
         };
       },
