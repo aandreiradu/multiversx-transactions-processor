@@ -60,10 +60,21 @@ Navigate to the project's root directory and execute:
 pnpm dev
 ```
 
-Upon executing the above command, the following will be available
+### Local Playground (Containerized)
+
+Comment the **#localhost** section from .env and uncomment the **#container** section
+
+Navigate to the project's root directory and execute:
+
+```sh
+pnpm dev:container
+```
+
+Upon executing one of the above commands, the following will be available
 
 - live-updates
-- watcher at [http://localhost:3001](http://localhost:3003) with the following routes available:
+- watcher at [http://localhost:3001](http://localhost:3001) with the following routes available:
   - GET /balances/coins/:coin/received?walletId={walletId} (Return received amounts for the authenticated user's wallet)
   - GET /balances/coins/:coin/sent?walletId={walletId} (Return sent amounts for the authenticated user's wallet)
-    Replace ":coin" with EGLD or ESDT Identifier depending on the coin.
+
+Replace ":coin" with EGLD or ESDT Identifier depending on the coin.
