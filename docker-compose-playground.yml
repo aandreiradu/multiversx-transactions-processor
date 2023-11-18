@@ -1,0 +1,32 @@
+services:
+  dev-db:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: mvx_root
+      MYSQL_DATABASE: mvx
+      MYSQL_USER: mvx_andrei
+    ports:
+      - "3356:3306"
+    volumes:
+      - mvx_transactions_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --log-error-verbosity=3
+
+  rabbitmq:
+    image: rabbitmq:3.8-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+        - 5673:5672
+        - 15673:15672
+    volumes:
+        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+
+  redis:
+    image: redis:7
+    ports:
+      - '6379:6379'
+    
+volumes:
+  mvx_transactions_data:
